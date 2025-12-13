@@ -27,18 +27,21 @@ class ImageViewer(QLabel):
         self.overlay_image = None
         self.show_overlay = False
 
-    def display_image(self, image: np.ndarray):
+    def display_image(self, image: np.ndarray, is_original: bool = False):
         """
         Display an image in the viewer.
 
         Args:
             image: Image as numpy array (BGR format from OpenCV)
+            is_original: If True, store as original image reference (only on first load)
         """
         if image is None:
             return
 
-        # Store original image
-        self.original_image = image.copy()
+        # Only store original image if explicitly marked as original
+        if is_original:
+            self.original_image = image.copy()
+
         self.current_image = image
 
         # Convert BGR to RGB for Qt

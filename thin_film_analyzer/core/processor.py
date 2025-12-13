@@ -28,6 +28,8 @@ from .detection import (
     calculate_coverage,
     calculate_otsu_threshold
 )
+from .lab_detection import detect_lab_layers
+from typing import Dict
 from ..core.logger import get_logger
 
 
@@ -97,7 +99,8 @@ def process_image(
     morph_close_kernel: int = 2,
     morph_open_kernel: int = 2,
     adaptive_block_size: int = 200,
-    adaptive_c: int = 5
+    adaptive_c: int = 5,
+    adaptive_bias: int = 0
 ) -> Tuple[np.ndarray, float]:
     """
     Process a single image to detect thin film coverage.
@@ -116,6 +119,7 @@ def process_image(
         morph_open_kernel: Morphological open kernel size (0 = disabled)
         adaptive_block_size: Adaptive threshold block size (odd number)
         adaptive_c: Adaptive threshold constant (higher = less sensitive)
+        adaptive_bias: Fine-tune adaptive threshold (-10 to +10, default 0)
 
     Returns:
         Tuple of (binary_mask, coverage_percentage)
@@ -164,11 +168,13 @@ def process_image(
     else:
         method = "manual" if threshold_value is not None else "otsu"
 
-    # Apply threshold
+    # Apply threshold with adaptive bias
+    # Effective C = adaptive_c + adaptive_bias
+    effective_c = adaptive_c + adaptive_bias
     # Disable auto-inversion - flakes are always brighter than substrate
     binary_mask = apply_threshold(
         gray, threshold_value, method, auto_invert=False,
-        adaptive_block_size=adaptive_block_size, adaptive_c=adaptive_c
+        adaptive_block_size=adaptive_block_size, adaptive_c=effective_c
     )
 
     # Apply morphological operations with configurable kernel sizes
@@ -200,3 +206,112 @@ def load_image_metadata(image_path: str) -> Tuple[Tuple[int, int], str]:
     format_ext = Path(image_path).suffix.upper().lstrip('.')
 
     return (width, height), format_ext
+
+
+def process_image_hybrid(
+    image_path: str,
+    # V1 parameters
+    threshold_value: Optional[int] = None,
+    use_adaptive: bool = True,
+    adaptive_block_size: int = 200,
+    adaptive_c: int = 5,
+    adaptive_bias: int = 0,
+    noise_reduction: bool = True,
+    blur_kernel: int = 3,
+    morph_close_kernel: int = 2,
+    morph_open_kernel: int = 2,
+    # V2 parameters
+    t1: int = 85,
+    t2: int = 170,
+    apply_vignetting_correction: bool = True,
+    # Other
+    roi: Optional[Tuple[int, int, int, int]] = None
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, float], np.ndarray]:
+    """
+    Hybrid V1+V2 processing pipeline for layer classification.
+
+    Step 1: V1 detects film boundary using adaptive threshold
+    Step 2: V2 classifies layers ONLY within V1 film regions
+
+    Args:
+        image_path: Path to the image file
+
+        V1 Parameters (Film Detection):
+        threshold_value: Manual threshold (0-255). If None, uses Otsu's/adaptive method
+        use_adaptive: Use adaptive threshold instead of Otsu
+        adaptive_block_size: Adaptive threshold block size (odd number)
+        adaptive_c: Adaptive threshold constant (higher = less sensitive)
+        adaptive_bias: Fine-tune adaptive threshold (-10 to +10, default 0)
+        noise_reduction: Whether to apply Gaussian blur preprocessing
+        blur_kernel: Gaussian blur kernel size (odd number, 1-15)
+        morph_close_kernel: Morphological close kernel size (0 = disabled)
+        morph_open_kernel: Morphological open kernel size (0 = disabled)
+
+        V2 Parameters (Layer Classification):
+        t1: Threshold between monolayer and bilayer (0-255)
+        t2: Threshold between bilayer and trilayer (0-255)
+        apply_vignetting_correction: Apply vignetting correction to L-channel
+
+        Other:
+        roi: Optional ROI coordinates (x, y, width, height)
+
+    Returns:
+        Tuple of (original_image, binary_mask, combined_stats, layer_mask)
+        - original_image: Original BGR image
+        - binary_mask: V1 film detection mask (0=substrate, 1=film)
+        - combined_stats: Combined V1+V2 statistics with layer breakdown
+        - layer_mask: V2 layer classification (0=substrate, 1=mono, 2=bi, 3=tri)
+
+    Raises:
+        FileNotFoundError: If image file doesn't exist
+        ValueError: If image cannot be loaded or parameters invalid
+    """
+    print(f"[DEBUG processor.py] process_image_hybrid called for: {image_path}")
+    print(f"[DEBUG processor.py] V2 params: t1={t1}, t2={t2}, vignetting={apply_vignetting_correction}")
+
+    # Load original image (needed for LAB conversion)
+    original_image = load_image_with_fallback(image_path)
+    print(f"[DEBUG processor.py] Image loaded, shape: {original_image.shape}")
+
+    # Step 1: V1 binary film detection
+    print("[DEBUG processor.py] Starting V1 binary film detection...")
+    binary_mask, v1_coverage = process_image(
+        image_path=image_path,
+        threshold_value=threshold_value,
+        noise_reduction=noise_reduction,
+        roi=roi,
+        use_adaptive=use_adaptive,
+        blur_kernel=blur_kernel,
+        morph_close_kernel=morph_close_kernel,
+        morph_open_kernel=morph_open_kernel,
+        adaptive_block_size=adaptive_block_size,
+        adaptive_c=adaptive_c,
+        adaptive_bias=adaptive_bias
+    )
+    print(f"[DEBUG processor.py] V1 detection complete. Coverage: {v1_coverage:.2f}%")
+    print(f"[DEBUG processor.py] Binary mask shape: {binary_mask.shape}, unique values: {np.unique(binary_mask)}")
+
+    # Step 2: V2 layer detection (ONLY on film pixels where binary_mask == 1)
+    print("[DEBUG processor.py] Starting V2 layer detection...")
+    layer_mask, layer_stats = detect_lab_layers(
+        binary_mask=binary_mask,
+        image=original_image,
+        t1=t1,
+        t2=t2,
+        apply_vignetting_correction_flag=apply_vignetting_correction
+    )
+    print(f"[DEBUG processor.py] V2 layer detection complete. Layer stats: {layer_stats}")
+    print(f"[DEBUG processor.py] Layer mask shape: {layer_mask.shape}, unique values: {np.unique(layer_mask)}")
+
+    # Combined statistics (V1 total + V2 layer breakdown)
+    combined_stats = {
+        'total_coverage': layer_stats['total_coverage'],  # From V1
+        'mono_coverage': layer_stats['mono_coverage'],     # From V2
+        'bi_coverage': layer_stats['bi_coverage'],         # From V2
+        'tri_coverage': layer_stats['tri_coverage']        # From V2
+    }
+
+    print(f"[DEBUG processor.py] Returning combined stats: {combined_stats}")
+    print(f"[DEBUG processor.py] process_image_hybrid complete")
+
+    return original_image, binary_mask, combined_stats, layer_mask

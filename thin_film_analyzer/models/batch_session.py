@@ -84,12 +84,19 @@ class BatchSession:
         threshold_setting: Threshold value to use for all images
         roi_settings: ROI coordinates if applied to all images
         summary_stats: Summary statistics after processing (calculated)
+        thresholds_locked: Whether T1/T2 thresholds are locked for batch (v2.1.0+)
+        locked_t1: Locked T1 threshold value (v2.1.0+)
+        locked_t2: Locked T2 threshold value (v2.1.0+)
     """
     image_refs: List[Image]
     scale_calibration: Optional[float] = None
     threshold_setting: int = 128
     roi_settings: Optional[Tuple[int, int, int, int]] = None
     summary_stats: Optional[BatchStatistics] = None
+    # v2.1.0 layer detection threshold locking
+    thresholds_locked: bool = False
+    locked_t1: Optional[int] = None
+    locked_t2: Optional[int] = None
 
     def __post_init__(self):
         """Validate batch session data."""
@@ -114,3 +121,54 @@ class BatchSession:
     def is_calibrated(self) -> bool:
         """Check if batch has scale calibration."""
         return self.scale_calibration is not None
+
+    def lock_thresholds(self, t1: int, t2: int) -> None:
+        """
+        Lock T1 and T2 thresholds for batch processing.
+
+        When locked, all images in the batch will use these threshold values
+        for layer classification, ensuring consistency across the batch.
+
+        Args:
+            t1: Monolayer/bilayer boundary threshold (0-255)
+            t2: Bilayer/trilayer boundary threshold (0-255)
+
+        Raises:
+            ValueError: If thresholds are invalid or t1 >= t2
+        """
+        if not (0 <= t1 <= 255 and 0 <= t2 <= 255):
+            raise ValueError(f"Thresholds must be 0-255, got t1={t1}, t2={t2}")
+        if t1 >= t2:
+            raise ValueError(f"T1 must be < T2, got t1={t1}, t2={t2}")
+
+        self.thresholds_locked = True
+        self.locked_t1 = t1
+        self.locked_t2 = t2
+
+    def unlock_thresholds(self) -> None:
+        """
+        Unlock thresholds to allow manual adjustment per image.
+        """
+        self.thresholds_locked = False
+        self.locked_t1 = None
+        self.locked_t2 = None
+
+    def are_thresholds_locked(self) -> bool:
+        """
+        Check if thresholds are currently locked.
+
+        Returns:
+            True if thresholds are locked, False otherwise
+        """
+        return self.thresholds_locked
+
+    def get_locked_thresholds(self) -> Optional[Tuple[int, int]]:
+        """
+        Get locked threshold values if thresholds are locked.
+
+        Returns:
+            Tuple of (t1, t2) if locked, None otherwise
+        """
+        if self.thresholds_locked and self.locked_t1 is not None and self.locked_t2 is not None:
+            return (self.locked_t1, self.locked_t2)
+        return None

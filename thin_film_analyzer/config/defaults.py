@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Application metadata
 APP_NAME = "ThinFilmAnalyzer"
-APP_VERSION = "1.0.0"
+APP_VERSION = "2.1.0"
 
 # Image processing defaults
 DEFAULT_THRESHOLD = 128  # Mid-range threshold for binary segmentation
@@ -57,3 +57,10 @@ DEFAULT_SCALE_UM_PER_PIXEL = None  # No calibration by default
 # ROI defaults
 ROI_BORDER_COLOR = (0, 255, 0)  # Green for ROI rectangle
 ROI_BORDER_WIDTH = 2  # pixels
+
+# v2.1.0: LAB Layer Detection defaults
+DEFAULT_T1 = 85  # Monolayer/Bilayer boundary threshold
+DEFAULT_T2 = 170  # Bilayer/Trilayer boundary threshold
+DEFAULT_AUTO_ALGORITHM = "kmeans"  # Default auto-detection algorithm
+DEFAULT_ADAPTIVE_BIAS = 0  # Adaptive threshold bias (-10 to +10)
+DEFAULT_APPLY_VIGNETTING_CORRECTION = True  # Apply L-channel vignetting correction

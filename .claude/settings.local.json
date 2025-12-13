@@ -4,7 +4,12 @@
       "Bash(powershell -File:*)",
       "Bash(powershell -Command:*)",
       "Bash(git rev-parse:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(openspec list:*)",
+      "Bash(mkdir:*)",
+      "Bash(openspec validate:*)",
+      "Bash(openspec show:*)",
+      "Bash(python -m thin_film_analyzer.main:*)"
     ],
     "deny": [],
     "ask": []
