@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo Thin Film Analyzer - Dependency Installer
+echo Thin Film Analyzer v2.1.1 - Installation
 echo ========================================
 echo.
 

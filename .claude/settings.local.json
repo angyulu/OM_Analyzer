@@ -9,7 +9,10 @@
       "Bash(mkdir:*)",
       "Bash(openspec validate:*)",
       "Bash(openspec show:*)",
-      "Bash(python -m thin_film_analyzer.main:*)"
+      "Bash(python -m thin_film_analyzer.main:*)",
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

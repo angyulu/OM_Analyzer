@@ -1,290 +1,243 @@
-# Thin Film Coverage Analyzer
+# Thin Film Analyzer v2.1.1
 
 Desktop application for automated thin film coverage analysis from optical microscope images.
 
-## Features
+![Version](https://img.shields.io/badge/version-2.1.1-blue)
+![Python](https://img.shields.io/badge/python-3.10+-green)
+![License](https://img.shields.io/badge/license-MIT-orange)
 
-**Current Version: 2.0.0**
+---
 
-- ✅ Single image loading via drag-drop or file browser
-- ✅ **Adaptive threshold algorithm** for vignetting correction (NEW!)
-- ✅ Batch image navigation with Previous/Next buttons (NEW!)
-- ✅ Real-time parameter tuning with instant visual feedback (NEW!)
-- ✅ Local background subtraction for uniform detection across image (NEW!)
-- ✅ Real-time visual overlay with adjustable transparency
-- ✅ Coverage percentage and processing time display
-- ✅ Multiple threshold methods: Adaptive (default), Otsu, Manual
-- ✅ Morphological operations for noise cleanup
-- ✅ Noise reduction preprocessing (Gaussian blur)
-- ✅ ROI support for focused analysis
-- ✅ Multiple file format support (TIFF, PNG, JPG, BMP)
+## Overview
 
-**Planned Features:**
+Thin Film Analyzer is a powerful desktop application that automatically detects and analyzes thin film coverage from optical microscope images. It features two detection modes:
 
-- Scale calibration for absolute area (µm²) measurements
-- CSV export of batch results
-- Statistics and histogram analysis
+- **V1 Mode**: Fast, accurate thin film detection using adaptive thresholding
+- **V2 Mode**: Advanced layer classification (monolayer, bilayer, trilayer) using LAB color space analysis
+
+### Key Features
+
+✅ **Automated Detection** - No manual tracing required  
+✅ **Adaptive Thresholding** - Handles uneven illumination  
+✅ **Layer Classification** - Distinguish between mono/bi/trilayer regions  
+✅ **Batch Processing** - Process hundreds of images automatically  
+✅ **Visual Overlay** - Color-coded visualization of detected regions  
+✅ **CSV Export** - Export results to spreadsheet format  
+✅ **Cross-Platform** - Works on Windows, macOS, and Linux  
+
+---
+
+## Quick Links
+
+- 📖 [Installation Guide](INSTALLATION_GUIDE.md) - Step-by-step setup instructions
+- 📚 [User Guide](USER_GUIDE.md) - Complete usage documentation
+- 🐛 [Report Issues](https://github.com/angyulu/OM_Analyzer/issues) - Bug reports and feature requests
+- 💾 [Download Latest Release](https://github.com/angyulu/OM_Analyzer/releases/latest)
+
+---
+
+## System Requirements
+
+### Minimum Requirements
+
+- **Operating System**: Windows 10+, macOS 10.14+, or Linux
+- **Python**: 3.10 or higher
+- **RAM**: 4GB minimum, 8GB recommended
+- **Display**: 1280x800 minimum resolution
+
+### Supported Image Formats
+
+- TIFF (.tif, .tiff) - Including 16-bit
+- PNG (.png)
+- JPEG (.jpg, .jpeg)
+- BMP (.bmp)
+
+---
 
 ## Installation
 
-### For Team Members (Non-Programmers)
+### Quick Install
 
-If you're receiving this application and need to use it without programming:
-
-1. **Read [SETUP_GUIDE.md](SETUP_GUIDE.md)** - Complete setup instructions for non-programmers
-2. **Run `install.bat`** - Installs Python and all required packages
-3. **Run `run_app.bat`** - Launches the application
-
-That's it! See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed instructions and troubleshooting.
-
-### For Developers
-
-#### Prerequisites
-
-- Python 3.8 or higher
-- Windows 10/11 (primary) or macOS/Linux (secondary)
-
-#### Setup
-
-1. Clone or download this repository:
-```bash
-cd OM_Analyzer/OM_V0
+**Windows:**
+```cmd
+install.bat
 ```
 
-2. Install dependencies:
+**macOS/Linux:**
 ```bash
-pip install --upgrade pip
-pip install -r requirements.txt
+chmod +x install.sh
+./install.sh
 ```
 
-3. Verify installation:
-```bash
-python -c "import PyQt6, cv2, numpy, PIL; print('All dependencies installed successfully!')"
-```
+For detailed installation instructions, see [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md).
 
-## Running the Application
-
-### Simple Method (Windows)
-
-```bash
-# Double-click run_app.bat
-# OR from command line:
-run_app.bat
-```
-
-### Command Line Method
-
-```bash
-python thin_film_analyzer/main.py
-```
-
-### First Launch
-
-On first launch, the application will display the main window with:
-- Adaptive threshold enabled by default
-- Optimal parameters pre-configured (Block Size: 200, C Value: 5)
-- Ready to load images
+---
 
 ## Usage
 
-### Basic Workflow
+### Quick Start
 
-1. **Load Image:**
-   - Click "Load Image" button or use File > Open Image (Ctrl+O)
-   - Supported formats: TIFF, PNG, JPG, BMP
-   - The image will be automatically processed with default settings
+1. Launch the application:
+   - **Windows**: Double-click `run_app.bat`
+   - **macOS/Linux**: Run `./run_app.sh`
 
-2. **View Results:**
-   - Coverage percentage is displayed at the top
-   - Processing time shown below coverage
-   - Red overlay shows detected flake regions
+2. Load an image:
+   - Drag and drop onto the window
+   - Or use `File > Open Image...`
 
-3. **Navigate Multiple Images:**
-   - Click "Previous" or "Next" to process other images in the same folder
-   - Each image is processed with current parameter settings
+3. View results:
+   - Red overlay shows detected film
+   - Coverage percentage in Results panel
 
-4. **Tune Detection (if needed):**
-   - **Adaptive C (default: 5):** Lower to detect thinner flakes, higher for only thick flakes
-   - **Adaptive Block Size (default: 200):** Size of local region for background estimation
-   - **Blur Kernel:** Increase for more noise reduction
-   - **Morphological Close/Open:** Adjust to clean up small holes or noise
-   - All parameters update in real-time
+For complete usage instructions, see [USER_GUIDE.md](USER_GUIDE.md).
 
-5. **Alternative Threshold Methods:**
-   - Uncheck "Use Adaptive Threshold" to use Otsu or Manual threshold
-   - Adjust "Threshold" slider for manual control
-   - Note: Global threshold may not work well with vignetting
+---
 
-### Keyboard Shortcuts
+## Features
 
-- `Ctrl+O`: Open image
-- `Ctrl+Q`: Exit application
+### V1 Mode: Basic Film Detection
 
-### Understanding the Algorithm
+- **Adaptive Threshold**: Handles uneven illumination and vignetting
+- **Noise Reduction**: Gaussian blur and morphological operations
+- **Real-time Overlay**: Visual feedback while adjusting parameters
+- **Fast Processing**: ~1-2 seconds per image
 
-The application uses **adaptive threshold with local background subtraction**:
+### V2 Mode: Layer Classification
 
-1. Calculates local background (vignetting removal)
-2. Subtracts background from image (flakes become positive values)
-3. Detects pixels brighter than local background by at least C value
-4. Applies morphological cleanup
+- **Color-Coded Overlay**:
+  - Red = Monolayer
+  - Blue = Bilayer
+  - Green = Trilayer
 
-This approach handles **vignetting** (darker edges, brighter center) that causes problems with global thresholding.
+- **Auto-Detection**: Four algorithms to automatically find optimal thresholds
+  - K-means clustering
+  - Percentile-based
+  - Histogram peak detection
+  - Otsu multi-threshold
 
-### Diagnostic Scripts
+- **Vignetting Correction**: Compensate for darker edges in microscope images
+- **Manual Fine-Tuning**: Adjust T1/T2 thresholds while viewing results
 
-Run diagnostic scripts to analyze images:
+### Batch Processing
 
-```bash
-# Analyze vignetting and threshold issues
-python diagnose_threshold.py
+- Load and process hundreds of images
+- Navigate between images easily
+- Lock settings for consistent processing
+- Export all results to CSV
+- Save overlay images for documentation
 
-# Detailed image statistics and brightness analysis
-python analyze_images.py
-```
+---
 
-These scripts help understand image characteristics and optimal parameter settings.
+## What's New in v2.1.1
 
-## Troubleshooting
+🐛 **Bug Fixes:**
+- Fixed overlay display issues in layer detection mode
+- Fixed binary mask value mismatch causing layer detection failures
+- Fixed auto-detect thresholds error
+- Fixed wrong overlay color in V1 mode (now correctly shows red)
 
-### Issue: "ModuleNotFoundError: No module named 'PyQt6'"
+🔄 **Changes:**
+- Layer detection now disabled by default (V1 mode on startup)
+- Improved error logging and debugging output
 
-**Solution:** Run `install.bat` to install all dependencies
-```bash
-# Windows
-install.bat
+📝 **Documentation:**
+- Added comprehensive installation guide
+- Added detailed user guide
+- Improved troubleshooting documentation
 
-# OR manually
-pip install -r requirements.txt
-```
+---
 
-### Issue: Application window doesn't open
+## Technology Stack
 
-**Solution:** Check Python version and Qt installation
-```bash
-python --version  # Should be 3.8+
-python -c "from PyQt6.QtWidgets import QApplication; print('PyQt6 OK')"
-```
+- **GUI**: PyQt6
+- **Image Processing**: OpenCV, scikit-image
+- **Scientific Computing**: NumPy, SciPy
+- **Data Export**: Pandas
+- **Language**: Python 3.10+
 
-### Issue: "Unable to load image" error
+---
 
-**Solution:** Application uses PIL/Pillow for TIFF fallback. Verify:
-- Supported formats: TIFF, TIF, PNG, JPG, JPEG, BMP
-- File is not corrupted (try opening in another application)
-- File path does not contain special characters
+## Support
 
-### Issue: Parameters not updating in real-time
+### Getting Help
 
-**Solution:** Make sure "Use Adaptive Threshold" is checked and an image is loaded. All parameters should update immediately when changed.
+- 📖 Read the [User Guide](USER_GUIDE.md)
+- 🔧 Check [Installation Guide](INSTALLATION_GUIDE.md) for setup issues
+- 🐛 [Report bugs](https://github.com/angyulu/OM_Analyzer/issues) on GitHub
 
-### Issue: Detection missing flakes or detecting too much
+### Common Issues
 
-**Solution:**
-- **Missing flakes:** Lower "Adaptive C" value (try 3-5)
-- **Over-detection:** Raise "Adaptive C" value (try 10-15)
-- **Vignetting problems:** Ensure "Use Adaptive Threshold" is enabled
-- Adjust "Adaptive Block Size" to be larger than your largest flake
+**Application won't start:**
+- Ensure Python 3.10+ is installed
+- Run `install.bat` or `./install.sh` to install dependencies
+
+**Modules not found:**
+- Rerun the installer
+- Or manually: `pip install -r requirements.txt`
+
+**Display issues:**
+- Update graphics drivers
+- Check system meets minimum requirements
+
+For more troubleshooting, see [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md#troubleshooting).
+
+---
 
 ## Project Structure
 
 ```
-thin_film_analyzer/
-├── main.py                  # Application entry point
-├── ui/                      # PyQt6 user interface
-│   ├── main_window.py       # Main application window
-│   ├── image_viewer.py      # Image display with overlay
-│   ├── widgets.py           # Custom UI widgets
-│   ├── results_table.py     # Results display
-│   └── dialogs.py           # Confirmation dialogs
-├── core/                    # Business logic
-│   ├── processor.py         # Image processing pipeline
-│   ├── detection.py         # Thin film detection algorithms
-│   ├── overlay.py           # Overlay generation
-│   ├── settings.py          # Settings persistence
-│   ├── logger.py            # Error logging
-│   ├── calibration.py       # Scale management
-│   └── export.py            # CSV export
-├── models/                  # Data entities
-│   ├── image.py
-│   ├── detection_result.py
-│   ├── scale_preset.py
-│   ├── batch_session.py
-│   └── app_settings.py
-├── config/                  # Configuration
-│   └── defaults.py          # Default settings
-├── tests/                   # Test suite
-│   ├── unit/
-│   ├── integration/
-│   └── synthetic/           # Synthetic test images
-└── resources/               # Icons and styles
+ThinFilmAnalyzer_v2.1.1/
+├── README.md                  # This file
+├── INSTALLATION_GUIDE.md      # Setup instructions
+├── USER_GUIDE.md              # Usage documentation
+├── requirements.txt           # Python dependencies
+├── install.bat                # Windows installer
+├── install.sh                 # macOS/Linux installer
+├── run_app.bat                # Windows launcher
+├── run_app.sh                 # macOS/Linux launcher
+└── thin_film_analyzer/        # Application source code
+    ├── main.py                # Entry point
+    ├── config/                # Configuration
+    ├── core/                  # Core processing logic
+    ├── models/                # Data models
+    └── ui/                    # User interface
 ```
 
-## Algorithm Details
+---
 
-### Why Adaptive Threshold?
+## Contributing
 
-Optical microscopy images often suffer from **vignetting** - darker edges and brighter center due to optical effects. With a single global threshold:
+We welcome contributions! If you'd like to contribute:
 
-- **Lower threshold:** Detects corner flakes BUT creates false-positive circle in center
-- **Higher threshold:** Eliminates center circle BUT misses corner flakes
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-**Solution:** Adaptive threshold with local background subtraction removes vignetting effect by normalizing each pixel against its local neighborhood.
-
-### Detection Philosophy
-
-The algorithm detects ALL flakes, from thinnest to thickest:
-
-- **Substrate:** Uniform brightness (after vignetting correction)
-- **Thin flakes:** Slightly brighter than substrate (first histogram peak after substrate)
-- **Thick flakes:** Much brighter than substrate (subsequent histogram peaks)
-
-The **adaptive_c** parameter represents the minimum brightness difference between substrate and the thinnest detectable flakes.
-
-### Algorithm Steps
-
-1. **Load image** - Support for TIFF, PNG, JPG, BMP (PIL fallback for TIFF)
-2. **Convert to grayscale** - Single channel processing
-3. **Noise reduction** - Optional Gaussian blur
-4. **Local background estimation** - Gaussian blur with large kernel (adaptive_block_size)
-5. **Background subtraction** - `diff = image - local_mean` (flakes become positive, substrate ≈ 0)
-6. **Threshold** - Detect pixels where `diff > adaptive_c`
-7. **Morphological operations** - Clean up noise and small holes
-8. **Coverage calculation** - Count detected pixels vs total pixels
-
-## Performance
-
-- **Single Image Processing:** <1 second for 2048×2048 images
-- **Real-time Updates:** All parameters update instantly
-- **Memory Usage:** Optimized with uint8 data types throughout pipeline
-
-## Support
-
-For issues or questions:
-1. Check the Troubleshooting section above
-2. Review error logs in the settings directory
-3. Report issues with diagnostic information
+---
 
 ## License
 
-Internal research tool - All rights reserved
+This project is licensed under the MIT License.
 
-## Version History
+---
 
-### v2.0.0 - Current
-- **Adaptive threshold with local background subtraction** (solves vignetting)
-- Real-time parameter tuning
-- Batch image navigation (Previous/Next)
-- Multiple threshold methods (Adaptive, Otsu, Manual)
-- Morphological operations
-- Coverage and processing time display
-- Multi-format support with PIL fallback
+## Authors
 
-### v1.0.0 (MVP)
-- Initial release with basic threshold detection
-- Single image analysis
-- Manual threshold adjustment
+Research Team  
+Version 2.1.1 - December 2025
 
-### Planned Releases
-- v2.1.0: CSV export for batch results
-- v2.2.0: Scale calibration and area measurements
-- v2.3.0: Statistics and histogram analysis
+---
+
+## Acknowledgments
+
+Built with:
+- PyQt6 for the user interface
+- OpenCV for image processing
+- scikit-image for advanced algorithms
+- NumPy and SciPy for scientific computing
+
+---
+
+**Repository**: https://github.com/angyulu/OM_Analyzer
+

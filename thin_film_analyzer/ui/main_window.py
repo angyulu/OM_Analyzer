@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Thin Film Coverage Analyzer v2.1.0")
+        self.setWindowTitle("Thin Film Coverage Analyzer v2.1.1")
         self.resize(1200, 800)
 
         # Initialize managers

@@ -1,7 +1,17 @@
+# Thin Film Analyzer v2.1.1 - Python Dependencies
+# Installation: pip install -r requirements.txt
+
+# GUI Framework
 PyQt6>=6.5.0
+
+# Image Processing
 opencv-python>=4.8.0
-Pillow>=10.0.0
 scikit-image>=0.21.0
+Pillow>=10.0.0
+
+# Scientific Computing
 numpy>=1.24.0
+scipy>=1.10.0
+
+# Data Export
 pandas>=2.0.0
-pytest>=7.4.0
