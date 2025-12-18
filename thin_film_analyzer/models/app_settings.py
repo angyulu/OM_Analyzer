@@ -26,6 +26,7 @@ class ApplicationSettings:
     overlay_transparency: float = 0.5
     noise_reduction_enabled: bool = True
     window_geometry: Optional[Tuple[int, int, int, int]] = None  # (x, y, width, height)
+    last_folder_path: Optional[str] = None  # v2.2.0: Remember last selected folder
     backup_timestamp: Optional[datetime] = None
 
     def __post_init__(self):
@@ -44,6 +45,7 @@ class ApplicationSettings:
             "overlay_transparency": self.overlay_transparency,
             "noise_reduction_enabled": self.noise_reduction_enabled,
             "window_geometry": self.window_geometry,
+            "last_folder_path": self.last_folder_path,
             "backup_timestamp": self.backup_timestamp.isoformat() if self.backup_timestamp else None
         }
 
@@ -62,6 +64,7 @@ class ApplicationSettings:
             overlay_transparency=data.get("overlay_transparency", 0.5),
             noise_reduction_enabled=data.get("noise_reduction_enabled", True),
             window_geometry=tuple(data["window_geometry"]) if data.get("window_geometry") else None,
+            last_folder_path=data.get("last_folder_path"),
             backup_timestamp=backup_ts
         )
 

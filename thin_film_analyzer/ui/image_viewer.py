@@ -20,7 +20,7 @@ class ImageViewer(QLabel):
         self.setScaledContents(False)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setStyleSheet("QLabel { background-color: #2b2b2b; }")
-        self.setText("Drag and drop an image here or use File > Open")
+        self.setText("Use File > Select Folder or File > Open Image to load images")
 
         self.current_image = None
         self.original_image = None
@@ -89,6 +89,15 @@ class ImageViewer(QLabel):
         """
         self.overlay_image = overlay_image
 
+    def get_overlay_image(self) -> np.ndarray:
+        """
+        Get the current overlay image (v2.2.0).
+
+        Returns:
+            Overlay image as numpy array or None if not available
+        """
+        return self.overlay_image
+
     def toggle_overlay(self, show: bool):
         """
         Toggle overlay visibility.
@@ -106,7 +115,7 @@ class ImageViewer(QLabel):
     def clear_image(self):
         """Clear the displayed image."""
         self.clear()
-        self.setText("Drag and drop an image here or use File > Open")
+        self.setText("Use File > Select Folder or File > Open Image to load images")
         self.current_image = None
         self.original_image = None
         self.overlay_image = None

@@ -180,3 +180,162 @@ class ResultsExporter:
     def result_count(self) -> int:
         """Get number of results ready for export."""
         return len(self.results)
+
+
+# v2.2.0: Per-image submit workflow functions
+
+def save_analyzed_image_with_overlay(
+    image_path: str,
+    overlay_image,
+    output_dir: Optional[Path] = None
+) -> tuple[bool, str]:
+    """
+    Save analyzed image with overlay to _analyzed file (v2.2.0).
+
+    Args:
+        image_path: Original image file path
+        overlay_image: Overlay image (numpy array with BGR format)
+        output_dir: Optional output directory (defaults to same folder as image)
+
+    Returns:
+        Tuple of (success: bool, message: str)
+    """
+    try:
+        image_path_obj = Path(image_path)
+
+        # Determine output directory
+        if output_dir is None:
+            output_dir = image_path_obj.parent
+
+        # Generate output filename: [original]_analyzed.[ext]
+        output_filename = f"{image_path_obj.stem}_analyzed{image_path_obj.suffix}"
+        output_path = output_dir / output_filename
+
+        # Save overlay image
+        success = cv2.imwrite(str(output_path), overlay_image)
+
+        if success:
+            return True, str(output_path)
+        else:
+            return False, "Failed to write image file"
+
+    except Exception as e:
+        return False, f"Error saving image: {str(e)}"
+
+
+def append_result_to_text_file(
+    folder_path: Path,
+    filename: str,
+    coverage: float,
+    mono_coverage: float,
+    bi_coverage: float,
+    tri_coverage: float
+) -> tuple[bool, str, Optional[str]]:
+    """
+    Append result to tab-delimited text file (v2.2.0).
+
+    Args:
+        folder_path: Folder containing the images
+        filename: Image filename (with extension)
+        coverage: Total coverage percentage
+        mono_coverage: Monolayer coverage percentage
+        bi_coverage: Bilayer coverage percentage
+        tri_coverage: Trilayer coverage percentage
+
+    Returns:
+        Tuple of (success: bool, message: str, duplicate_action: Optional[str])
+        duplicate_action is 'overwrite', 'append', or None
+    """
+    try:
+        # Generate results filename: [FolderName]_Analyzed.txt
+        folder_name = folder_path.name
+        results_filename = f"{folder_name}_Analyzed.txt"
+        results_path = folder_path / results_filename
+
+        # Check if file exists and if filename is already present
+        file_exists = results_path.exists()
+        duplicate_action = None
+
+        if file_exists:
+            # Check for duplicate
+            with open(results_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                for line in lines[1:]:  # Skip header
+                    if line.strip() and line.split('\t')[0] == filename:
+                        # Duplicate found - return for user decision
+                        return False, "duplicate", None
+
+        # Prepare data row
+        data_row = f"{filename}\t{coverage:.2f}\t{mono_coverage:.2f}\t{bi_coverage:.2f}\t{tri_coverage:.2f}\n"
+
+        # Write to file
+        if not file_exists:
+            # Create new file with header
+            with open(results_path, 'w', encoding='utf-8') as f:
+                f.write("filename\tcoverage\tmonolayer_coverage\tbilayer_coverage\ttrilayer_coverage\n")
+                f.write(data_row)
+        else:
+            # Append to existing file
+            with open(results_path, 'a', encoding='utf-8') as f:
+                f.write(data_row)
+
+        return True, str(results_path), None
+
+    except PermissionError:
+        return False, "Permission denied. Check folder permissions.", None
+    except Exception as e:
+        return False, f"Error writing results file: {str(e)}", None
+
+
+def handle_duplicate_result(
+    folder_path: Path,
+    filename: str,
+    coverage: float,
+    mono_coverage: float,
+    bi_coverage: float,
+    tri_coverage: float,
+    action: str
+) -> tuple[bool, str]:
+    """
+    Handle duplicate result with specified action (v2.2.0).
+
+    Args:
+        folder_path: Folder containing the images
+        filename: Image filename
+        coverage: Total coverage percentage
+        mono_coverage: Monolayer coverage percentage
+        bi_coverage: Bilayer coverage percentage
+        tri_coverage: Trilayer coverage percentage
+        action: 'overwrite' or 'append'
+
+    Returns:
+        Tuple of (success: bool, message: str)
+    """
+    try:
+        folder_name = folder_path.name
+        results_filename = f"{folder_name}_Analyzed.txt"
+        results_path = folder_path / results_filename
+
+        data_row = f"{filename}\t{coverage:.2f}\t{mono_coverage:.2f}\t{bi_coverage:.2f}\t{tri_coverage:.2f}\n"
+
+        if action == "overwrite":
+            # Read all lines, replace matching row
+            with open(results_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+
+            with open(results_path, 'w', encoding='utf-8') as f:
+                for line in lines:
+                    if line.strip() and not line.startswith(filename + '\t'):
+                        f.write(line)
+                    elif line.strip() and line.startswith(filename + '\t'):
+                        f.write(data_row)  # Replace with new data
+
+        elif action == "append":
+            # Simply append new row
+            with open(results_path, 'a', encoding='utf-8') as f:
+                f.write(data_row)
+
+        return True, str(results_path)
+
+    except Exception as e:
+        return False, f"Error handling duplicate: {str(e)}"

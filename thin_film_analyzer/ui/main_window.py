@@ -9,7 +9,8 @@ from typing import Optional, List
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QCheckBox, QFileDialog, QLabel, QGroupBox, QMessageBox, QComboBox, QSlider, QSpinBox
+    QPushButton, QCheckBox, QFileDialog, QLabel, QGroupBox, QMessageBox, QComboBox, QSlider, QSpinBox,
+    QProgressDialog, QApplication
 )
 from PyQt6.QtCore import Qt
 
@@ -28,10 +29,14 @@ from ..core.detection_algorithms import (
     detect_thresholds_histogram,
     detect_thresholds_otsu_multi
 )
+from ..core.export import save_analyzed_image_with_overlay, append_result_to_text_file, handle_duplicate_result
 from ..core.settings import SettingsManager
 from ..core.logger import get_logger
 from ..core.detection import calculate_otsu_threshold, apply_noise_reduction
-from ..config.defaults import SUPPORTED_IMAGE_FORMATS, DEFAULT_THRESHOLD, DEFAULT_OVERLAY_TRANSPARENCY
+from ..config.defaults import (
+    SUPPORTED_IMAGE_FORMATS, DEFAULT_THRESHOLD, DEFAULT_OVERLAY_TRANSPARENCY,
+    MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT, CONTROL_PANEL_MAX_WIDTH
+)
 import cv2
 import numpy as np
 
@@ -43,8 +48,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Thin Film Coverage Analyzer v2.1.1")
+        self.setWindowTitle("Thin Film Coverage Analyzer v2.2.0")
         self.resize(1200, 800)
+        self.setMinimumSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT)  # v2.2.0: Set minimum window size
 
         # Initialize managers
         self.settings_manager = SettingsManager()
@@ -62,6 +68,7 @@ class MainWindow(QMainWindow):
         self.image_batch: List[str] = []  # List of image file paths
         self.current_image_index: int = 0  # Current image index in batch
         self.batch_results: List[DetectionResult] = []  # Processed results for batch export (v2.1.0)
+        self.current_folder: Optional[Path] = None  # v2.2.0: Track current folder for results file
 
         # Debouncing timer for parameter changes
         from PyQt6.QtCore import QTimer
@@ -72,8 +79,7 @@ class MainWindow(QMainWindow):
         self._init_ui()
         self._load_settings()
 
-        # Enable drag-drop
-        self.setAcceptDrops(True)
+        # v2.2.0: Drag-and-drop removed in favor of folder selection
 
     def _init_ui(self):
         """Initialize UI components."""
@@ -106,6 +112,12 @@ class MainWindow(QMainWindow):
         open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self.open_image_dialog)
 
+        # v2.2.0: Add folder selection
+        select_folder_action = file_menu.addAction("Select Folder...")
+        select_folder_action.setShortcut("Ctrl+Shift+O")
+        select_folder_action.setToolTip("Load all images from a selected folder")
+        select_folder_action.triggered.connect(self.select_folder_dialog)
+
         file_menu.addSeparator()
 
         exit_action = file_menu.addAction("Exit")
@@ -134,6 +146,7 @@ class MainWindow(QMainWindow):
     def _create_left_panel(self) -> QWidget:
         """Create left control panel."""
         panel = QWidget()
+        panel.setMaximumWidth(CONTROL_PANEL_MAX_WIDTH)  # v2.2.0: Limit control panel width
         layout = QVBoxLayout()
 
         # Processing controls
@@ -297,6 +310,19 @@ class MainWindow(QMainWindow):
         self.processing_label.setStyleSheet("color: orange; font-style: italic;")
         self.processing_label.hide()
         results_layout.addWidget(self.processing_label)
+
+        # v2.2.0: Submit button for saving results
+        self.submit_button = QPushButton("Submit")
+        self.submit_button.setToolTip("Save analyzed image and append results to text file")
+        self.submit_button.setEnabled(False)  # Disabled by default
+        self.submit_button.clicked.connect(self.submit_current_image)
+        results_layout.addWidget(self.submit_button)
+
+        # Success feedback label
+        self.submit_feedback_label = QLabel("")
+        self.submit_feedback_label.setStyleSheet("color: green; font-style: italic;")
+        self.submit_feedback_label.hide()
+        results_layout.addWidget(self.submit_feedback_label)
 
         results_group.setLayout(results_layout)
         layout.addWidget(results_group)
@@ -482,6 +508,86 @@ class MainWindow(QMainWindow):
                 self.load_image(file_paths[0])
             else:
                 self.load_image_batch(file_paths)
+
+    def select_folder_dialog(self):
+        """Open folder dialog to select a folder and load all images from it (v2.2.0)."""
+        # Use last folder path as starting directory
+        start_dir = self.settings.last_folder_path if self.settings.last_folder_path else ""
+
+        folder_path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Folder Containing Images",
+            start_dir,
+            QFileDialog.Option.ShowDirsOnly
+        )
+
+        if folder_path:
+            image_files = self.load_images_from_folder(folder_path)
+            if image_files:
+                self.current_folder = Path(folder_path)  # v2.2.0: Track folder for results file
+
+                # Save last folder path to settings
+                self.settings.last_folder_path = folder_path
+                self.settings_manager.save_settings(self.settings)
+
+                self.load_image_batch(image_files)
+            else:
+                show_info_dialog(
+                    self,
+                    "No Images Found",
+                    f"No supported image files found in the selected folder.\n"
+                    f"Supported formats: {', '.join(SUPPORTED_IMAGE_FORMATS)}"
+                )
+
+    def load_images_from_folder(self, folder_path: str) -> List[str]:
+        """
+        Scan folder for supported image files (v2.2.0).
+
+        Args:
+            folder_path: Path to folder to scan
+
+        Returns:
+            List of image file paths found in folder
+        """
+        folder = Path(folder_path)
+        image_files = []
+
+        # Get all files in folder (non-recursive)
+        all_files = list(folder.glob("*"))
+
+        # Create progress dialog
+        progress = QProgressDialog(
+            "Scanning folder for images...",
+            "Cancel",
+            0,
+            len(all_files),
+            self
+        )
+        progress.setWindowTitle("Loading Images")
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.show()
+
+        for i, file_path in enumerate(all_files):
+            # Check if user canceled
+            if progress.wasCanceled():
+                break
+
+            # Update progress
+            progress.setValue(i)
+            progress.setLabelText(f"Loading images: {len(image_files)} / {len(all_files)}")
+            QApplication.processEvents()  # Update UI
+
+            # Check if it's a file (not directory) with supported extension
+            if file_path.is_file():
+                ext = file_path.suffix.lower()
+                # Exclude _analyzed files and check for supported format
+                if ext in SUPPORTED_IMAGE_FORMATS and "_analyzed" not in file_path.stem:
+                    image_files.append(str(file_path))
+
+        progress.setValue(len(all_files))
+        progress.close()
+
+        return image_files
 
     def load_image(self, file_path: str):
         """
@@ -743,6 +849,8 @@ class MainWindow(QMainWindow):
         finally:
             # Restore cursor
             QApplication.restoreOverrideCursor()
+            # v2.2.0: Update submit button state
+            self.update_submit_button_state()
 
     def on_threshold_changed(self, new_threshold: int):
         """Handle threshold slider change - debounced processing."""
@@ -792,6 +900,152 @@ class MainWindow(QMainWindow):
     def on_overlay_toggled(self, checked: bool):
         """Handle overlay checkbox toggle - real-time display update."""
         self.image_viewer.toggle_overlay(checked)
+
+    def update_submit_button_state(self):
+        """Update submit button enabled state based on current conditions (v2.2.0)."""
+        # Enable submit if we have a valid result and a folder is selected
+        can_submit = (
+            self.current_image is not None and
+            self.current_result is not None and
+            self.current_folder is not None
+        )
+        self.submit_button.setEnabled(can_submit)
+
+    def submit_current_image(self):
+        """Submit current image analysis: save overlay image and append to results file (v2.2.0)."""
+        # Validate state
+        if not self.current_image or not self.current_result:
+            show_error_dialog(
+                self,
+                "Submit Error",
+                "No image or analysis result available. Please process an image first."
+            )
+            return
+
+        if not self.current_folder:
+            show_error_dialog(
+                self,
+                "Submit Error",
+                "No folder selected. Please use 'Select Folder' to load images first."
+            )
+            return
+
+        # Hide previous feedback
+        self.submit_feedback_label.hide()
+
+        try:
+            # Get overlay image from viewer
+            overlay_image = self.image_viewer.get_overlay_image()
+            if overlay_image is None:
+                show_error_dialog(
+                    self,
+                    "Submit Error",
+                    "No overlay image available. The analysis may have failed."
+                )
+                return
+
+            # Save analyzed image
+            success, message = save_analyzed_image_with_overlay(
+                self.current_image.file_path,
+                overlay_image
+            )
+
+            if not success:
+                show_error_dialog(
+                    self,
+                    "Image Save Error",
+                    f"Failed to save analyzed image:\n{message}"
+                )
+                return
+
+            analyzed_image_path = message  # message contains the path on success
+
+            # Prepare result data
+            filename = Path(self.current_image.file_path).name
+            coverage = self.current_result.coverage_percentage
+            # v2.2.0 fix: Check if values are None, not just if attribute exists
+            mono_coverage = self.current_result.mono_coverage if self.current_result.mono_coverage is not None else 0.0
+            bi_coverage = self.current_result.bi_coverage if self.current_result.bi_coverage is not None else 0.0
+            tri_coverage = self.current_result.tri_coverage if self.current_result.tri_coverage is not None else 0.0
+
+            # Append to results file
+            success, message, duplicate_action = append_result_to_text_file(
+                self.current_folder,
+                filename,
+                coverage,
+                mono_coverage,
+                bi_coverage,
+                tri_coverage
+            )
+
+            if not success:
+                if message == "duplicate":
+                    # Handle duplicate - show dialog
+                    choice = self.show_duplicate_dialog(filename)
+                    if choice == "cancel":
+                        return
+                    elif choice in ["overwrite", "append"]:
+                        # Handle the duplicate with chosen action
+                        success, message = handle_duplicate_result(
+                            self.current_folder,
+                            filename,
+                            coverage,
+                            mono_coverage,
+                            bi_coverage,
+                            tri_coverage,
+                            choice
+                        )
+                        if not success:
+                            show_error_dialog(
+                                self,
+                                "Results Save Error",
+                                f"Failed to save results:\n{message}"
+                            )
+                            return
+                else:
+                    show_error_dialog(
+                        self,
+                        "Results Save Error",
+                        f"Failed to save results:\n{message}"
+                    )
+                    return
+
+            # Show success feedback
+            results_file = self.current_folder / f"{self.current_folder.name}_Analyzed.txt"
+            self.submit_feedback_label.setText(f"✓ Saved: {Path(analyzed_image_path).name}")
+            self.submit_feedback_label.show()
+
+            # Auto-hide feedback after 5 seconds
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(5000, self.submit_feedback_label.hide)
+
+        except Exception as e:
+            show_error_dialog(
+                self,
+                "Submit Error",
+                f"An unexpected error occurred:\n{str(e)}"
+            )
+
+    def show_duplicate_dialog(self, filename: str) -> str:
+        """Show dialog for handling duplicate results (v2.2.0)."""
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Duplicate Result")
+        dialog.setText(f"Results for '{filename}' already exist in the results file.")
+        dialog.setInformativeText("What would you like to do?")
+
+        overwrite_btn = dialog.addButton("Overwrite", QMessageBox.ButtonRole.AcceptRole)
+        append_btn = dialog.addButton("Append new row", QMessageBox.ButtonRole.AcceptRole)
+        cancel_btn = dialog.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+
+        dialog.exec()
+
+        clicked = dialog.clickedButton()
+        if clicked == overwrite_btn:
+            return "overwrite"
+        elif clicked == append_btn:
+            return "append"
+        else:
+            return "cancel"
 
     def on_blur_kernel_changed(self, value: int):
         """Handle blur kernel size change - debounced processing."""
@@ -944,20 +1198,6 @@ class MainWindow(QMainWindow):
             )
         finally:
             QApplication.restoreOverrideCursor()
-
-    def dragEnterEvent(self, event):
-        """Handle drag enter event."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-
-    def dropEvent(self, event):
-        """Handle drop event for drag-and-drop."""
-        files = [url.toLocalFile() for url in event.mimeData().urls()]
-        if files:
-            # Filter for supported image formats
-            valid_files = [f for f in files if Path(f).suffix.lower() in SUPPORTED_IMAGE_FORMATS]
-            if valid_files:
-                self.load_image_batch(valid_files)
 
     def load_image_batch(self, file_paths: List[str]):
         """

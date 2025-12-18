@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Application metadata
 APP_NAME = "ThinFilmAnalyzer"
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
 
 # Image processing defaults
 DEFAULT_THRESHOLD = 128  # Mid-range threshold for binary segmentation
@@ -49,6 +49,9 @@ LOG_BACKUP_COUNT = 2
 # UI defaults
 DEFAULT_WINDOW_WIDTH = 1200
 DEFAULT_WINDOW_HEIGHT = 800
+MINIMUM_WINDOW_WIDTH = 1280  # v2.2.0: Minimum supported window width
+MINIMUM_WINDOW_HEIGHT = 720  # v2.2.0: Minimum supported window height
+CONTROL_PANEL_MAX_WIDTH = 500  # v2.2.0: Maximum width for control panels
 THUMBNAIL_SIZE = 150  # pixels
 
 # Scale calibration

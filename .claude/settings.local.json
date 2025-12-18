@@ -12,7 +12,10 @@
       "Bash(python -m thin_film_analyzer.main:*)",
       "Bash(git push:*)",
       "Bash(cat:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(openspec archive add-lab-layer-detection:*)",
+      "Bash(openspec archive add-responsive-ui-folder-import:*)"
     ],
     "deny": [],
     "ask": []
