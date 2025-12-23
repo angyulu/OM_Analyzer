@@ -21,10 +21,11 @@ Complete guide for using the Thin Film Analyzer application to analyze thin film
 
 **macOS/Linux:** Run `./run_app.sh` in Terminal
 
-### 2. Load an Image
+### 2. Load Images from Folder
 
-- **Drag and drop** an image file onto the window
-- Or use `File > Open Image...` (Ctrl+O)
+- Click the **"📁 Select Folder..."** button at the top of the Processing panel
+- Or use `File > Select Folder...` (Ctrl+O)
+- All images in the selected folder will be loaded automatically
 - Supported formats: TIFF, PNG, JPEG, BMP
 
 ### 3. View Results
@@ -97,8 +98,9 @@ V1 mode is the default mode providing fast thin film detection.
 
 ### Load Multiple Images
 
-- Drag and drop multiple files
-- Or `File > Open Image...` and select multiple files
+- Click **"📁 Select Folder..."** button at the top of the Processing panel
+- Or use `File > Select Folder...` menu option
+- All images in the selected folder will be loaded automatically
 
 ### Navigation
 

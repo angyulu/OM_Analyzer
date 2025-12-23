@@ -20,7 +20,7 @@ class ImageViewer(QLabel):
         self.setScaledContents(False)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setStyleSheet("QLabel { background-color: #2b2b2b; }")
-        self.setText("Use File > Select Folder or File > Open Image to load images")
+        self.setText("Click 'Select Folder' button or use File > Select Folder to load images")
 
         self.current_image = None
         self.original_image = None
@@ -115,7 +115,7 @@ class ImageViewer(QLabel):
     def clear_image(self):
         """Clear the displayed image."""
         self.clear()
-        self.setText("Use File > Select Folder or File > Open Image to load images")
+        self.setText("Click 'Select Folder' button or use File > Select Folder to load images")
         self.current_image = None
         self.original_image = None
         self.overlay_image = None

@@ -131,6 +131,8 @@ For complete usage instructions, see [USER_GUIDE.md](USER_GUIDE.md).
 ## What's New in v2.2.1
 
 ✨ **New Features:**
+- Scrollable left control panel - prevents controls from being blocked when window shrinks
+- "Select Folder" button added to top of Processing panel for easy access
 - Responsive UI with minimum window size (1280×720) and dynamic layout
 - Folder-based image import with progress indicator and cancel support
 - Per-image submit workflow with tab-delimited results export
@@ -142,8 +144,9 @@ For complete usage instructions, see [USER_GUIDE.md](USER_GUIDE.md).
 - Improved layer detection result export
 
 🔄 **Changes:**
-- Replaced drag-and-drop with "Select Folder" menu option
-- Control panels now have maximum width constraint (500px)
+- Removed "Open Image" option - now only supports folder-based workflow
+- Replaced drag-and-drop with "Select Folder" button and menu option
+- Control panels now have maximum width constraint (500px) with vertical scrolling
 - Results exported to tab-delimited text files for Excel compatibility
 
 ---

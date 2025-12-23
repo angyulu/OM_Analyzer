@@ -108,13 +108,9 @@ class MainWindow(QMainWindow):
         # File menu
         file_menu = menubar.addMenu("File")
 
-        open_action = file_menu.addAction("Open Image...")
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self.open_image_dialog)
-
-        # v2.2.0: Add folder selection
+        # v2.2.1: Removed "Open Image" - only support folder selection
         select_folder_action = file_menu.addAction("Select Folder...")
-        select_folder_action.setShortcut("Ctrl+Shift+O")
+        select_folder_action.setShortcut("Ctrl+O")
         select_folder_action.setToolTip("Load all images from a selected folder")
         select_folder_action.triggered.connect(self.select_folder_dialog)
 
@@ -151,6 +147,12 @@ class MainWindow(QMainWindow):
         # Processing controls
         process_group = QGroupBox("Processing")
         process_layout = QVBoxLayout()
+
+        # v2.2.1: Add Select Folder button at top of Processing group
+        self.select_folder_button = QPushButton("📁 Select Folder...")
+        self.select_folder_button.setToolTip("Load all images from a selected folder")
+        self.select_folder_button.clicked.connect(self.select_folder_dialog)
+        process_layout.addWidget(self.select_folder_button)
 
         # Threshold method checkbox
         self.adaptive_threshold_checkbox = QCheckBox("Use Adaptive Threshold")
