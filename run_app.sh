@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Starting Thin Film Analyzer v2.1.1..."
+echo "Starting Thin Film Analyzer v2.2.1..."
 echo ""
 
 # Check if Python 3 is installed

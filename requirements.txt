@@ -1,4 +1,4 @@
-# Thin Film Analyzer v2.1.1 - Python Dependencies
+# Thin Film Analyzer v2.2.1 - Python Dependencies
 # Installation: pip install -r requirements.txt
 
 # GUI Framework

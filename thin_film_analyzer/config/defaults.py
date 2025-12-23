@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Application metadata
 APP_NAME = "ThinFilmAnalyzer"
-APP_VERSION = "2.2.0"
+APP_VERSION = "2.2.1"
 
 # Image processing defaults
 DEFAULT_THRESHOLD = 128  # Mid-range threshold for binary segmentation

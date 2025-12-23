@@ -1,4 +1,4 @@
-# User Guide - Thin Film Analyzer v2.1.1
+# User Guide - Thin Film Analyzer v2.2.1
 
 Complete guide for using the Thin Film Analyzer application to analyze thin film coverage from optical microscope images.
 

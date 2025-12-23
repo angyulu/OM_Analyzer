@@ -5,7 +5,7 @@ echo ========================================
 echo.
 
 REM Set version
-set VERSION=2.0.0
+set VERSION=2.2.1
 
 REM Create distribution folder name
 set DIST_FOLDER=ThinFilmAnalyzer_v%VERSION%

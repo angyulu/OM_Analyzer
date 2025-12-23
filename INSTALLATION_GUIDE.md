@@ -1,4 +1,4 @@
-# Installation Guide - Thin Film Analyzer v2.1.1
+# Installation Guide - Thin Film Analyzer v2.2.1
 
 This guide will help you install and set up the Thin Film Analyzer on your computer.
 
@@ -71,7 +71,7 @@ sudo dnf install python3 python3-pip
 ### Windows Installation
 
 1. **Extract the ZIP file**
-   - Right-click `ThinFilmAnalyzer_v2.1.1.zip`
+   - Right-click `ThinFilmAnalyzer_v2.2.1.zip`
    - Select "Extract All..."
    - Choose a destination folder (e.g., `C:\ThinFilmAnalyzer`)
 
@@ -97,14 +97,14 @@ sudo dnf install python3 python3-pip
 ### macOS Installation
 
 1. **Extract the ZIP file**
-   - Double-click `ThinFilmAnalyzer_v2.1.1.zip`
+   - Double-click `ThinFilmAnalyzer_v2.2.1.zip`
    - The folder will be automatically extracted
 
 2. **Open Terminal**
    - Open the Terminal application (Applications → Utilities → Terminal)
    - Navigate to the extracted folder:
      ```bash
-     cd /path/to/ThinFilmAnalyzer_v2.1.1
+     cd /path/to/ThinFilmAnalyzer_v2.2.1
      ```
    - Tip: You can drag the folder from Finder into Terminal to auto-type the path
 
@@ -130,8 +130,8 @@ sudo dnf install python3 python3-pip
 
 1. **Extract the ZIP file**
    ```bash
-   unzip ThinFilmAnalyzer_v2.1.1.zip
-   cd ThinFilmAnalyzer_v2.1.1
+   unzip ThinFilmAnalyzer_v2.2.1.zip
+   cd ThinFilmAnalyzer_v2.2.1
    ```
 
 2. **Make scripts executable**
@@ -255,13 +255,13 @@ chmod +x install.sh run_app.sh
 
 ### Windows
 
-1. Delete the entire `ThinFilmAnalyzer_v2.1.1` folder
+1. Delete the entire `ThinFilmAnalyzer_v2.2.1` folder
 2. That's it! The application doesn't install anything system-wide
 
 ### macOS/Linux
 
 ```bash
-rm -rf ThinFilmAnalyzer_v2.1.1
+rm -rf ThinFilmAnalyzer_v2.2.1
 ```
 
 ### Cleaning Up Python Packages (Optional)

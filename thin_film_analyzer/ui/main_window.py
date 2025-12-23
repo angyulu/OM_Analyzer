@@ -10,7 +10,7 @@ from typing import Optional, List
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QCheckBox, QFileDialog, QLabel, QGroupBox, QMessageBox, QComboBox, QSlider, QSpinBox,
-    QProgressDialog, QApplication
+    QProgressDialog, QApplication, QScrollArea
 )
 from PyQt6.QtCore import Qt
 
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Thin Film Coverage Analyzer v2.2.0")
+        self.setWindowTitle("Thin Film Coverage Analyzer v2.2.1")
         self.resize(1200, 800)
         self.setMinimumSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT)  # v2.2.0: Set minimum window size
 
@@ -146,7 +146,6 @@ class MainWindow(QMainWindow):
     def _create_left_panel(self) -> QWidget:
         """Create left control panel."""
         panel = QWidget()
-        panel.setMaximumWidth(CONTROL_PANEL_MAX_WIDTH)  # v2.2.0: Limit control panel width
         layout = QVBoxLayout()
 
         # Processing controls
@@ -330,7 +329,17 @@ class MainWindow(QMainWindow):
         layout.addStretch()
 
         panel.setLayout(layout)
-        return panel
+
+        # v2.2.1: Wrap panel in scroll area to prevent controls from being blocked when window shrinks
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(panel)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)  # Clean appearance, no border
+        scroll_area.setMaximumWidth(CONTROL_PANEL_MAX_WIDTH)  # Same width constraint as panel
+
+        return scroll_area
 
     def _create_v2_layer_panel(self) -> QGroupBox:
         """Create V2 layer classification panel (v2.1.0)."""

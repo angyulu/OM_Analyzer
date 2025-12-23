@@ -1,8 +1,8 @@
-# Thin Film Analyzer v2.1.1
+# Thin Film Analyzer v2.2.1
 
 Desktop application for automated thin film coverage analysis from optical microscope images.
 
-![Version](https://img.shields.io/badge/version-2.1.1-blue)
+![Version](https://img.shields.io/badge/version-2.2.1-blue)
 ![Python](https://img.shields.io/badge/python-3.10+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
@@ -128,22 +128,23 @@ For complete usage instructions, see [USER_GUIDE.md](USER_GUIDE.md).
 
 ---
 
-## What's New in v2.1.1
+## What's New in v2.2.1
+
+✨ **New Features:**
+- Responsive UI with minimum window size (1280×720) and dynamic layout
+- Folder-based image import with progress indicator and cancel support
+- Per-image submit workflow with tab-delimited results export
+- Remember last selected folder across app restarts
 
 🐛 **Bug Fixes:**
+- Fixed layer coverage values showing 0 in results file
 - Fixed overlay display issues in layer detection mode
-- Fixed binary mask value mismatch causing layer detection failures
-- Fixed auto-detect thresholds error
-- Fixed wrong overlay color in V1 mode (now correctly shows red)
+- Improved layer detection result export
 
 🔄 **Changes:**
-- Layer detection now disabled by default (V1 mode on startup)
-- Improved error logging and debugging output
-
-📝 **Documentation:**
-- Added comprehensive installation guide
-- Added detailed user guide
-- Improved troubleshooting documentation
+- Replaced drag-and-drop with "Select Folder" menu option
+- Control panels now have maximum width constraint (500px)
+- Results exported to tab-delimited text files for Excel compatibility
 
 ---
 
@@ -186,7 +187,7 @@ For more troubleshooting, see [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md#trou
 ## Project Structure
 
 ```
-ThinFilmAnalyzer_v2.1.1/
+ThinFilmAnalyzer_v2.2.1/
 ├── README.md                  # This file
 ├── INSTALLATION_GUIDE.md      # Setup instructions
 ├── USER_GUIDE.md              # Usage documentation
@@ -225,7 +226,7 @@ This project is licensed under the MIT License.
 ## Authors
 
 Research Team  
-Version 2.1.1 - December 2025
+Version 2.2.1 - December 2025
 
 ---
 
